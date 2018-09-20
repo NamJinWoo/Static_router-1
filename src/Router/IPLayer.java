@@ -38,7 +38,7 @@ public class IPLayer extends BaseLayer {
 	void setDestinationIPAddress(byte[] destinationAddress) {
 		for (int i = 0; i < 4; i++)
 			ip_destinationIP[i] = destinationAddress[i];
-	}
+	} //여기까지는 set해주는 부분들.
 
 	boolean receiveIP(byte[] data) {
 		ip_data = new byte[data.length];
@@ -59,19 +59,19 @@ public class IPLayer extends BaseLayer {
 					break;
 				} else
 					check = 1;
-			}
+			} //서브넷 마스크와 아이피를 앤드 연산을 하고 그것이 데스티네이션과 같지않다면 체크가 0, 있으면 1 로 한다.
 			if (check == 1) {
 				if (interfaceNumber == routingTable[i].getInterface()) {
 					((ARPLayer) this.getUnderLayer()).send(ip_data, routingTable[i].getGateway());
-
+				
 				} else {
 					((ARPLayer) otherIPLayer.getUnderLayer()).send(ip_data, routingTable[i].getGateway());
 				}
-
+				// 체크가 1일때 인터페이스 번호가 라우팅 테이블에 있는 인터페이스라면 현재 거의 하위레이어에 보내고
+				// 아니면 다른 아이피레이어의 하위 레이어로 보낸다. 이거는 라우터의 다른곳.
 				return true;
 			}
 		}
-
 		return false;
 	}
 	public static int byte2Int(byte[] src)
@@ -81,7 +81,7 @@ public class IPLayer extends BaseLayer {
    
         return ((s1 << 8) + (s2 << 0));
     }
-	boolean receiveARP(byte[] data) {
+	boolean receiveARP(byte[] data) { //이 함수 뭔가 이상합니다. ARPProxy부분인거같은데 약간 코드가 이상합니다.
 		int check = 1;
 		for (int i = 0; i < 4; i++) {
 			if (ip_sourceIP[i] != data[i + 24]) {
@@ -99,12 +99,12 @@ public class IPLayer extends BaseLayer {
 			for (int j = 0; j < 4; j++) {
 				byte[] netMask = routingTable[i].getNetMask();
 				if (destination[j] != (netMask[j] & data[j + 24])) {
-					check = 0;
+					check = 0; //같지않으면 0으로 설정.
 					break;
 				} else
-					check = 1;
+					check = 1; //같으면 1로 설정.
 			}
-			if (check == 1) {
+			if (check == 1) { // 앤드연산을 하고 데스티네이션이랑 비교했을때 같으면 !
 				if (interfaceNumber != routingTable[i].getInterface()) {
 					((ARPLayer) this.getUnderLayer()).ARP_reply_send(data);
 					((ARPLayer) otherIPLayer.getUnderLayer()).ARP_request_send(routingTable[i].getGateway());
@@ -114,7 +114,7 @@ public class IPLayer extends BaseLayer {
 				return true;
 			}
 		}
-		((ARPLayer) this.getUnderLayer()).ARP_reply_send(data);
+		((ARPLayer) this.getUnderLayer()).ARP_reply_send(data); // ARP를 받고 다시 답장한다.
 		return false;
 	}
 }
